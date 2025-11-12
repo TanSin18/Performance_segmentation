@@ -70,8 +70,9 @@ def print_help():
 ⚙️  Configuration:
 
     Set API key: export OPENAI_API_KEY='your-key'
-    Use Anthropic: export ANTHROPIC_API_KEY='your-key' (modify code)
-    Use Ollama: Install locally and modify code to use provider='ollama'
+    Use Anthropic: export ANTHROPIC_API_KEY='your-key' --provider anthropic
+    Use Databricks: export DATABRICKS_TOKEN='your-token' --provider databricks
+    Use Ollama: Install locally and use --provider ollama
 """
     print(help_text)
 
@@ -236,8 +237,9 @@ def check_api_keys() -> tuple:
     """Check which API keys are available."""
     openai_key = os.getenv("OPENAI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    databricks_token = os.getenv("DATABRICKS_TOKEN")
 
-    return openai_key, anthropic_key
+    return openai_key, anthropic_key, databricks_token
 
 
 def main():
@@ -259,14 +261,14 @@ def main():
     parser.add_argument(
         '--provider', '-p',
         type=str,
-        choices=['openai', 'anthropic', 'ollama'],
+        choices=['openai', 'anthropic', 'ollama', 'databricks'],
         default='openai',
         help='LLM provider to use (default: openai)'
     )
     parser.add_argument(
         '--model', '-m',
         type=str,
-        help='Model name (e.g., gpt-4, claude-3-5-sonnet-20241022, llama3)'
+        help='Model name (e.g., gpt-4, claude-3-5-sonnet-20241022, llama3, databricks-gpt-5)'
     )
     parser.add_argument(
         '--no-verbose', '-nv',
@@ -277,7 +279,7 @@ def main():
     args = parser.parse_args()
 
     # Check for API keys
-    openai_key, anthropic_key = check_api_keys()
+    openai_key, anthropic_key, databricks_token = check_api_keys()
 
     if args.provider == 'openai' and not openai_key:
         print(f"{Colors.FAIL}❌ Error: OPENAI_API_KEY not found{Colors.ENDC}")
@@ -285,6 +287,7 @@ def main():
         print("  export OPENAI_API_KEY='your-key-here'")
         print("\nOr use a different provider:")
         print("  --provider anthropic (requires ANTHROPIC_API_KEY)")
+        print("  --provider databricks (requires DATABRICKS_TOKEN)")
         print("  --provider ollama (requires local Ollama installation)")
         sys.exit(1)
 
@@ -292,6 +295,12 @@ def main():
         print(f"{Colors.FAIL}❌ Error: ANTHROPIC_API_KEY not found{Colors.ENDC}")
         print("\nSet your API key:")
         print("  export ANTHROPIC_API_KEY='your-key-here'")
+        sys.exit(1)
+
+    if args.provider == 'databricks' and not databricks_token:
+        print(f"{Colors.FAIL}❌ Error: DATABRICKS_TOKEN not found{Colors.ENDC}")
+        print("\nSet your Databricks token:")
+        print("  export DATABRICKS_TOKEN='your-token-here'")
         sys.exit(1)
 
     # Determine model
@@ -303,6 +312,8 @@ def main():
             model = 'claude-3-5-sonnet-20241022'
         elif args.provider == 'ollama':
             model = 'llama3'
+        elif args.provider == 'databricks':
+            model = 'databricks-gpt-5'
 
     # Initialize agent
     try:
