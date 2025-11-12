@@ -70,7 +70,7 @@ class CampaignOptimizationAgent:
         Initialize the ReAct agent.
 
         Args:
-            model_provider: LLM provider ("openai", "anthropic", "ollama")
+            model_provider: LLM provider ("openai", "anthropic", "ollama", "databricks")
             model_name: Name of the model to use
             api_key: API key for the provider (if required)
             temperature: LLM temperature (0 = deterministic)
@@ -121,6 +121,17 @@ class CampaignOptimizationAgent:
             return Ollama(
                 model=self.model_name,
                 temperature=temperature
+            )
+        elif self.model_provider == "databricks":
+            # Databricks uses OpenAI-compatible API
+            databricks_token = api_key or os.getenv("DATABRICKS_TOKEN")
+            if not databricks_token:
+                raise ValueError("Databricks token required. Set DATABRICKS_TOKEN environment variable.")
+            return ChatOpenAI(
+                model=self.model_name,
+                temperature=temperature,
+                api_key=databricks_token,
+                base_url="https://dbc-99e67a7d-d06a.cloud.databricks.com/serving-endpoints"
             )
         else:
             raise ValueError(f"Unsupported model provider: {self.model_provider}")
@@ -264,7 +275,7 @@ def create_agent(
     Factory function to create an agent instance.
 
     Args:
-        provider: LLM provider ("openai", "anthropic", "ollama")
+        provider: LLM provider ("openai", "anthropic", "ollama", "databricks")
         model: Model name
         api_key: API key (optional, can use environment variable)
         verbose: Show reasoning steps
@@ -281,6 +292,9 @@ def create_agent(
 
         >>> # Using local Ollama
         >>> agent = create_agent(provider="ollama", model="llama3")
+
+        >>> # Using Databricks
+        >>> agent = create_agent(provider="databricks", model="databricks-gpt-5")
     """
     return CampaignOptimizationAgent(
         model_provider=provider,
@@ -319,16 +333,18 @@ if __name__ == "__main__":
     print("=" * 70)
 
     # Check for API keys
-    if not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"):
+    if not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY") and not os.getenv("DATABRICKS_TOKEN"):
         print("\n⚠️  No API key found!")
-        print("Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable.")
+        print("Set OPENAI_API_KEY, ANTHROPIC_API_KEY, or DATABRICKS_TOKEN environment variable.")
         print("\nExample:")
         print("  export OPENAI_API_KEY='your-key-here'")
         print("  python react_agent.py")
+        print("\nOr use Databricks:")
+        print("  export DATABRICKS_TOKEN='your-token-here'")
         print("\nOr use local Ollama:")
         print("  Install: https://ollama.ai")
         print("  Run: ollama pull llama3")
-        print("\nThen modify this script to use provider='ollama'")
+        print("\nThen modify this script to use provider='databricks' or provider='ollama'")
         exit(1)
 
     try:

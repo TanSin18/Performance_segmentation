@@ -23,6 +23,7 @@ class AgentConfig:
     # API Keys
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
     ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
+    DATABRICKS_TOKEN = os.getenv('DATABRICKS_TOKEN')
 
     # Campaign Analysis Defaults
     DEFAULT_MAX_SEGMENTS = int(os.getenv('DEFAULT_MAX_SEGMENTS', '10'))
@@ -38,6 +39,7 @@ class AgentConfig:
             'verbose': cls.VERBOSE,
             'has_openai_key': bool(cls.OPENAI_API_KEY),
             'has_anthropic_key': bool(cls.ANTHROPIC_API_KEY),
+            'has_databricks_token': bool(cls.DATABRICKS_TOKEN),
             'default_max_segments': cls.DEFAULT_MAX_SEGMENTS,
             'default_min_lift': cls.DEFAULT_MIN_LIFT,
             'default_min_segment_pct': cls.DEFAULT_MIN_SEGMENT_PCT
@@ -57,8 +59,11 @@ class AgentConfig:
         if cls.PROVIDER == 'anthropic' and not cls.ANTHROPIC_API_KEY:
             return False, "ANTHROPIC_API_KEY not set. Set it in .env or environment."
 
-        if cls.PROVIDER not in ['openai', 'anthropic', 'ollama']:
-            return False, f"Invalid provider: {cls.PROVIDER}. Must be openai, anthropic, or ollama."
+        if cls.PROVIDER == 'databricks' and not cls.DATABRICKS_TOKEN:
+            return False, "DATABRICKS_TOKEN not set. Set it in .env or environment."
+
+        if cls.PROVIDER not in ['openai', 'anthropic', 'ollama', 'databricks']:
+            return False, f"Invalid provider: {cls.PROVIDER}. Must be openai, anthropic, ollama, or databricks."
 
         return True, ""
 
@@ -72,6 +77,7 @@ class AgentConfig:
         print(f"   Verbose: {config['verbose']}")
         print(f"   OpenAI Key: {'✅ Set' if config['has_openai_key'] else '❌ Not set'}")
         print(f"   Anthropic Key: {'✅ Set' if config['has_anthropic_key'] else '❌ Not set'}")
+        print(f"   Databricks Token: {'✅ Set' if config['has_databricks_token'] else '❌ Not set'}")
         print(f"\n   Default Max Segments: {config['default_max_segments']}")
         print(f"   Default Min Lift: {config['default_min_lift']:.0%}")
         print(f"   Default Min Segment %: {config['default_min_segment_pct']:.0%}")
