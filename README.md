@@ -58,6 +58,303 @@ This will:
 
 **Runtime:** < 30 seconds on typical laptop
 
+---
+
+## 🤖 AI Agent (NEW!)
+
+**Audience Miner 2.0 now includes an AI agent** that uses natural language to analyze campaigns and provide intelligent recommendations.
+
+### What is the AI Agent?
+
+The AI agent uses **ReAct (Reasoning + Acting)** architecture to:
+- Understand natural language queries
+- Autonomously use analysis tools
+- Reason about campaign performance
+- Provide actionable, data-driven recommendations
+- Explain its reasoning step-by-step
+
+### Quick Start with the Agent
+
+#### 1. Setup API Key
+
+```bash
+# Copy the example env file
+cp .env.example .env
+
+# Edit .env and add your API key
+# For OpenAI (recommended for quick start):
+echo "OPENAI_API_KEY=your_key_here" >> .env
+
+# Or for Anthropic Claude:
+echo "ANTHROPIC_API_KEY=your_key_here" >> .env
+```
+
+Get API keys:
+- **OpenAI**: https://platform.openai.com/api-keys (Recommended: gpt-4o-mini is fast and cheap)
+- **Anthropic**: https://console.anthropic.com/
+
+#### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 3. Run the Agent
+
+**Interactive Mode** (Best experience):
+```bash
+python agent_cli.py
+```
+
+**Single Query Mode**:
+```bash
+python agent_cli.py --query "Analyze Campaign_A and show top segments"
+```
+
+**Demo Mode**:
+```bash
+python agent_cli.py --demo
+```
+
+### Example Agent Conversations
+
+```
+You: Analyze Campaign_A and find the best opportunities
+
+🤖 Agent: I'll analyze Campaign_A for you. Let me start by loading the data...
+
+[Agent loads data, runs segmentation, validates results]
+
+🤖 Agent: I found 8 high-performing segments. Here are the top 3:
+
+1. INCREASE BIDS for income_bucket = '100K+'
+   Current eCR: 4.11% (baseline lift: +64.8%)
+   Recommended bid adjustment: +42% (multiplier: 1.42x)
+   Segment size: 1,800 sessions
+   Confidence: 95%
+
+2. INCREASE BIDS for age_range = '35-44'
+   Current eCR: 3.85% (baseline lift: +54.2%)
+   Recommended bid adjustment: +38% (multiplier: 1.38x)
+   Segment size: 2,100 sessions
+   Confidence: 98%
+
+3. INCREASE BIDS for education_level = 'Graduate'
+   Current eCR: 3.65% (baseline lift: +46.3%)
+   Recommended bid adjustment: +34% (multiplier: 1.34x)
+   Segment size: 1,650 sessions
+   Confidence: 92%
+
+These recommendations are statistically significant (p < 0.05) and should
+increase your campaign ROI by an estimated 25-35%.
+```
+
+```
+You: Compare Campaign_A and Campaign_B
+
+🤖 Agent: Let me load both campaigns and compare their performance...
+
+[Agent loads and analyzes both campaigns]
+
+🤖 Agent: Campaign_A has a strong advantage in 3 key segments:
+
+1. income_bucket = '100K+': Campaign_A eCR is 4.11% vs Campaign_B's 3.01%
+   (+36.9% advantage). You're winning affluent audiences!
+
+2. age_range = '35-44': Campaign_A eCR is 3.85% vs Campaign_B's 2.95%
+   (+30.5% advantage). Your creative resonates better with this age group.
+
+3. device_type = 'Desktop': Campaign_A eCR is 3.25% vs Campaign_B's 2.80%
+   (+16.1% advantage). Desktop experience is superior.
+
+Recommendation: Double down on high-income, 35-44 age, desktop users for
+Campaign_A. Consider improving Campaign_B's creative for these segments.
+```
+
+### Agent CLI Commands
+
+**Quick Commands**:
+```bash
+analyze <campaign_id>              # Analyze campaign
+compare <campaign_a> <campaign_b>  # Compare campaigns
+segments <campaign_id>             # Show top segments
+list                               # List loaded campaigns
+help                               # Show help
+exit                               # Quit
+```
+
+**Natural Language Queries** (just type what you want):
+```
+"Which segments should I bid higher on?"
+"What's the ROI impact of the top segment?"
+"Show me segments with at least 50% lift"
+"Give me 5 actionable recommendations"
+"Why is Campaign_B underperforming?"
+"Calculate potential revenue increase for the best segment"
+```
+
+### Agent CLI Options
+
+```bash
+# Use different LLM providers
+python agent_cli.py --provider openai    # OpenAI GPT (default)
+python agent_cli.py --provider anthropic # Anthropic Claude
+python agent_cli.py --provider ollama    # Local Ollama
+
+# Use specific models
+python agent_cli.py --model gpt-4              # More powerful
+python agent_cli.py --model claude-3-5-sonnet-20241022  # Claude Sonnet
+
+# Hide reasoning steps (faster output)
+python agent_cli.py --no-verbose
+
+# Single query without interactive mode
+python agent_cli.py -q "Analyze Campaign_A"
+```
+
+### Using Local LLMs (Ollama)
+
+**No API key required!** Run models locally:
+
+```bash
+# 1. Install Ollama
+# Visit: https://ollama.ai
+
+# 2. Download a model
+ollama pull llama3
+
+# 3. Run the agent with Ollama
+python agent_cli.py --provider ollama --model llama3
+```
+
+### Programmatic Usage
+
+```python
+from react_agent import create_agent
+
+# Create agent
+agent = create_agent(
+    provider='openai',
+    model='gpt-4o-mini',
+    verbose=True
+)
+
+# Ask questions
+response = agent.chat("What are the best segments for Campaign_A?")
+print(response)
+
+# Run multiple queries
+queries = [
+    "Load Campaign_A",
+    "Show me top 5 segments",
+    "Calculate ROI for the best segment"
+]
+
+for query in queries:
+    response = agent.chat(query)
+    print(f"Q: {query}\nA: {response}\n")
+```
+
+### How the Agent Works
+
+The agent uses **ReAct (Reasoning + Acting)** architecture:
+
+1. **Reasoning**: Agent thinks about the problem
+   - "I need to load campaign data first"
+   - "I should validate statistical significance"
+   - "I should explain the impact in business terms"
+
+2. **Acting**: Agent uses tools to gather information
+   - `load_campaign_data(campaign_id)`
+   - `run_segmentation_analysis(campaign_id)`
+   - `calculate_roi_impact(segment)`
+
+3. **Observing**: Agent sees results and adjusts
+   - Reads tool outputs
+   - Validates findings
+   - Synthesizes insights
+
+4. **Responding**: Agent provides comprehensive answer
+   - Data-driven recommendations
+   - Clear explanations
+   - Actionable next steps
+
+### Available Agent Tools
+
+The agent can use these tools autonomously:
+
+| Tool | Purpose |
+|------|---------|
+| `load_campaign_data` | Load and summarize campaign metrics |
+| `run_segmentation_analysis` | Find high-performing segments |
+| `compare_campaigns` | Compare two campaigns |
+| `get_segment_details` | Deep dive on specific segment |
+| `calculate_roi_impact` | Project ROI of optimizations |
+| `list_campaigns` | Show loaded campaigns |
+| `get_recommendations` | Get actionable summary |
+
+### Agent Configuration
+
+Edit `.env` or `agent_config.py` to customize:
+
+```python
+# LLM Settings
+AGENT_PROVIDER=openai           # openai, anthropic, ollama
+AGENT_MODEL=gpt-4o-mini        # model name
+AGENT_VERBOSE=true             # show reasoning
+
+# Analysis Defaults
+DEFAULT_MAX_SEGMENTS=10        # max segments to find
+DEFAULT_MIN_LIFT=0.20          # minimum lift (20%)
+DEFAULT_MIN_SEGMENT_PCT=0.05   # minimum size (5%)
+```
+
+### Cost Estimates
+
+**OpenAI GPT-4o-mini** (Recommended):
+- ~$0.01-0.05 per query
+- Very fast responses
+- High quality analysis
+
+**OpenAI GPT-4**:
+- ~$0.10-0.50 per query
+- Best reasoning quality
+- Slower but more thorough
+
+**Anthropic Claude Sonnet**:
+- ~$0.05-0.20 per query
+- Excellent for complex analysis
+- Strong at explanations
+
+**Ollama (Local)**:
+- Free!
+- Requires GPU for good performance
+- Privacy-friendly
+
+### Troubleshooting
+
+**"API key not found"**:
+- Make sure `.env` file exists
+- Check API key is correct
+- Try: `export OPENAI_API_KEY='your-key'`
+
+**"Rate limit exceeded"**:
+- Wait a few seconds and retry
+- Upgrade your API plan
+- Use cheaper model (gpt-4o-mini)
+
+**"Agent keeps failing"**:
+- Enable verbose mode to see reasoning: `--verbose`
+- Check if campaign data loaded correctly
+- Try simpler query first
+
+**Poor quality responses**:
+- Try gpt-4 instead of gpt-4o-mini: `--model gpt-4`
+- Be more specific in your query
+- Enable verbose to see agent's thinking
+
+---
+
 ### Run the Minimal Demo
 
 For a quick demonstration of core concepts:
@@ -71,15 +368,22 @@ This runs a simplified ~200-line version showing all key algorithms.
 ## Project Structure
 
 ```
-toy_project/
+Performance_segmentation/
 ├── README.md                          # This file
 ├── requirements.txt                   # Python dependencies
+│
 ├── main.py                           # Main orchestration script
 ├── mock_data_generator.py            # Synthetic data generation
 ├── pandas_data_loader.py             # Data loading and aggregation
 ├── simple_segmentation_engine.py     # Core segmentation algorithm
 ├── simple_comparison_engine.py       # Campaign comparison
-└── minimal_audience_miner.py         # Single-file minimal demo
+├── minimal_audience_miner.py         # Single-file minimal demo
+│
+├── agent_tools.py                    # 🤖 AI agent tool wrappers
+├── react_agent.py                    # 🤖 ReAct agent implementation
+├── agent_cli.py                      # 🤖 Interactive CLI interface
+├── agent_config.py                   # 🤖 Agent configuration
+└── .env.example                      # 🤖 Example environment config
 ```
 
 ## Core Algorithms
@@ -464,10 +768,13 @@ The implementation is complete when:
 ✅ Campaign comparison finds advantages
 ✅ All statistical tests work correctly
 ✅ Runtime < 30 seconds on typical laptop
+✅ 🤖 AI agent responds to natural language queries
+✅ 🤖 Agent autonomously uses tools and provides recommendations
+✅ 🤖 Interactive CLI works smoothly
 
 ---
 
-**Built with:** Python 3.7+, Pandas, NumPy, SciPy
+**Built with:** Python 3.7+, Pandas, NumPy, SciPy, LangChain, OpenAI/Anthropic APIs
 
 **Author:** Audience Miner 2.0 Toy Project
 
